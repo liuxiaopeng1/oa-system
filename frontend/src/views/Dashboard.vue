@@ -202,7 +202,12 @@ function getPriorityType(priority: string) {
 }
 
 function getStatusType(status: string) {
-  const map: Record<string, string> = { todo: 'info', inprogress: 'warning', done: 'success' }
+  const map: Record<string, string> = {
+    todo: 'info',
+    inprogress: 'warning',
+    done: 'success',
+    cancelled: 'danger'
+  }
   return map[status] || 'info'
 }
 

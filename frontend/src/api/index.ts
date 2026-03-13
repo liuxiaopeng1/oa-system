@@ -95,7 +95,7 @@ export const leaveApi = {
   getById: (id: number) => get<Leave>(`/leaves/${id}`, undefined, { silentError: true }),
   create: (data: Partial<Leave>) => post<Leave>('/leaves', data),
   approve: (id: number, approved: boolean, comment?: string) => post(`/leaves/${id}/approve`, { approved, comment }),
-  delete: (id: number) => del(`/leaves/${id}`),
+  cancel: (id: number) => post(`/leaves/${id}/cancel`),
   getBalance: <T = any>(userId: number) => get<T>('/leaves/balance/' + userId, undefined, { silentError: true })
 }
 

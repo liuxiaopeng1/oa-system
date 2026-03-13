@@ -9,6 +9,8 @@
             <el-option label="事假" value="personal" />
             <el-option label="婚假" value="marriage" />
             <el-option label="产假" value="maternity" />
+            <el-option label="陪产假" value="paternity" />
+            <el-option label="丧假" value="bereavement" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
@@ -16,6 +18,7 @@
             <el-option label="待审批" value="pending" />
             <el-option label="已通过" value="approved" />
             <el-option label="已拒绝" value="rejected" />
+            <el-option label="已撤销" value="cancelled" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -80,7 +83,7 @@
               拒绝
             </el-button>
             <el-button type="primary" link @click="handleView(row)">详情</el-button>
-            <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
+            <el-button v-if="row.status === 'pending'" type="danger" link @click="handleCancel(row)">撤销</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -107,6 +110,8 @@
             <el-option label="事假" value="personal" />
             <el-option label="婚假" value="marriage" />
             <el-option label="产假" value="maternity" />
+            <el-option label="陪产假" value="paternity" />
+            <el-option label="丧假" value="bereavement" />
           </el-select>
         </el-form-item>
         <el-form-item label="开始日期" prop="startDate">
@@ -272,15 +277,15 @@ async function handleApprove(row: Leave, approved: boolean) {
   await handleSearch()
 }
 
-async function handleDelete(row: Leave) {
-  await ElMessageBox.confirm('确定要删除该请假记录吗？', '提示', {
+async function handleCancel(row: Leave) {
+  await ElMessageBox.confirm('确定要撤销该请假申请吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   })
 
-  await leaveApi.delete(row.id)
-  ElMessage.success('删除成功')
+  await leaveApi.cancel(row.id)
+  ElMessage.success('撤销成功')
   await handleSearch()
 }
 
@@ -328,7 +333,12 @@ async function handleViewBalance() {
 }
 
 function getStatusType(status: string) {
-  const map: Record<string, string> = { pending: 'warning', approved: 'success', rejected: 'danger' }
+  const map: Record<string, string> = {
+    pending: 'warning',
+    approved: 'success',
+    rejected: 'danger',
+    cancelled: 'info'
+  }
   return map[status] || 'info'
 }
 

@@ -17,6 +17,7 @@
             <el-option label="待办" value="todo" />
             <el-option label="进行中" value="inprogress" />
             <el-option label="已完成" value="done" />
+            <el-option label="已取消" value="cancelled" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -296,7 +297,12 @@ function getPriorityType(priority: string) {
 }
 
 function getStatusType(status: string) {
-  const map: Record<string, string> = { todo: 'info', inprogress: 'warning', done: 'success' }
+  const map: Record<string, string> = {
+    todo: 'info',
+    inprogress: 'warning',
+    done: 'success',
+    cancelled: 'danger'
+  }
   return map[status] || 'info'
 }
 

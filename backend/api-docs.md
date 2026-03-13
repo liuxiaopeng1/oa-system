@@ -293,6 +293,11 @@ Authorization: Bearer <token>
 
 **接口**: `POST /auth/refresh`
 
+**实现约定**:
+- refresh token 采用服务端持久化会话模型
+- 后端应校验 token 是否存在、是否过期、是否已吊销
+- 建议会话数据落表到 `user_sessions`
+
 **请求参数**:
 ```json
 {
@@ -775,6 +780,10 @@ Authorization: Bearer <token>
 
 **适用条件**: 仅待审批状态的申请可撤销
 
+**说明**:
+- 当前前端不使用 `DELETE /leaves/{id}`
+- 请假记录默认保留，撤销通过状态流转实现，便于审计与统计
+
 ---
 
 ## 6. 公告管理模块
@@ -824,7 +833,10 @@ Authorization: Bearer <token>
 
 **接口**: `GET /notices/{id}`
 
-**说明**: 访问此接口会自动增加阅读数
+**说明**:
+- 此接口为纯查询接口，不应产生副作用
+- 返回详情时应带回当前登录用户的 `isRead`
+- 阅读数变更统一通过 `POST /notices/{id}/read` 处理
 
 ### 6.3 创建公告
 
@@ -852,6 +864,11 @@ Authorization: Bearer <token>
 ### 6.6 标记为已读
 
 **接口**: `POST /notices/{id}/read`
+
+**说明**:
+- 首次标记已读时写入 `notice_reads`
+- 若尚未读取过该公告，可同步递增 `notices.view_count`
+- 重复调用应保持幂等
 
 ### 6.7 批量标记已读
 
@@ -1089,6 +1106,12 @@ Authorization: Bearer <token>
 ---
 
 ## 附录
+
+### 用户角色返回约定
+
+- 当前前端用户对象仅消费单个 `roleId`、`roleName`
+- 后端若内部支持多角色，应以 `users.primary_role_id` 作为接口主返回角色
+- `user_roles` 用于权限扩展，不直接改变当前前端返回结构
 
 ### 请假类型枚举
 

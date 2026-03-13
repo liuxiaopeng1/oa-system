@@ -67,6 +67,7 @@ ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 
 ### 3.3 系统支撑
 
+- `user_sessions`
 - `files`
 - `settings`
 - `operation_logs`
@@ -130,6 +131,7 @@ CREATE TABLE `users` (
 实现建议：
 - 前端返回时可通过连表或视图补出 `departmentName`、`roleName`
 - 若支持多角色，接口响应仍建议保留一个主角色字段给前端直接用
+- 当前接口层的 `roleId`、`roleName` 应固定映射 `primary_role_id`
 
 ---
 
@@ -221,6 +223,11 @@ CREATE TABLE `user_roles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户角色关联表';
 ```
 
+实现建议：
+- 当前前端仅消费单角色展示
+- `user_roles` 主要用于权限扩展、后台配置和未来多角色场景
+- `/users`、`/auth/info` 返回的 `roleId`、`roleName` 应以主角色为准
+
 ---
 
 ### 4.5 菜单表 `menus`
@@ -276,6 +283,41 @@ CREATE TABLE `role_menus` (
   KEY `idx_role_menus_menu_id` (`menu_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色菜单关联表';
 ```
+
+---
+
+### 4.7 用户会话表 `user_sessions`
+
+用途：
+- 支撑 refresh token
+- 支撑主动下线、单端控制、会话吊销
+
+```sql
+CREATE TABLE `user_sessions` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` BIGINT UNSIGNED NOT NULL COMMENT '用户 ID',
+  `refresh_token` VARCHAR(512) NOT NULL COMMENT '刷新令牌',
+  `device_type` VARCHAR(50) DEFAULT NULL COMMENT '设备类型',
+  `device_name` VARCHAR(100) DEFAULT NULL COMMENT '设备名称',
+  `ip_address` VARCHAR(64) DEFAULT NULL COMMENT '登录 IP',
+  `user_agent` VARCHAR(500) DEFAULT NULL COMMENT '客户端标识',
+  `expires_at` DATETIME NOT NULL COMMENT '过期时间',
+  `revoked_at` DATETIME DEFAULT NULL COMMENT '吊销时间',
+  `last_used_at` DATETIME DEFAULT NULL COMMENT '最近使用时间',
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_sessions_refresh_token` (`refresh_token`),
+  KEY `idx_user_sessions_user_id` (`user_id`),
+  KEY `idx_user_sessions_expires_at` (`expires_at`),
+  KEY `idx_user_sessions_revoked_at` (`revoked_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户会话表';
+```
+
+实现建议：
+- `POST /auth/refresh` 校验 `refresh_token` 是否存在且未吊销
+- `POST /auth/logout` 可按当前会话写入 `revoked_at`
+- 若不想保存原始 refresh token，可保存其哈希值
 
 ---
 
@@ -401,6 +443,11 @@ CREATE TABLE `leave_requests` (
 - `statusName`
 - `createTime`
 
+实现建议：
+- 请假记录默认不建议物理删除
+- 前端“撤销申请”对应 `status = 'cancelled'`
+- 仅待审批记录允许撤销
+
 ---
 
 ### 5.4 假期余额表 `leave_balances`
@@ -488,6 +535,11 @@ CREATE TABLE `notice_reads` (
   KEY `idx_notice_reads_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='公告阅读记录表';
 ```
+
+实现建议：
+- `GET /notices/{id}` 只查询详情与已读状态，不写入本表
+- `POST /notices/{id}/read` 首次调用时插入记录
+- 阅读数 `view_count` 应与首次已读保持一致，避免重复累计
 
 ---
 

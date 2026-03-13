@@ -56,13 +56,13 @@ export interface Leave {
   id: number
   userId: number
   userName: string
-  type: 'annual' | 'sick' | 'personal' | 'marriage' | 'maternity'
+  type: 'annual' | 'sick' | 'personal' | 'marriage' | 'maternity' | 'paternity' | 'bereavement'
   typeName: string
   startDate: string
   endDate: string
   days: number
   reason: string
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled'
   statusName: string
   createTime: string
 }
@@ -93,7 +93,7 @@ export interface Task {
   assigneeName: string
   priority: 'low' | 'medium' | 'high'
   priorityName: string
-  status: 'todo' | 'inprogress' | 'done'
+  status: 'todo' | 'inprogress' | 'done' | 'cancelled'
   statusName: string
   dueDate: string
   createTime: string
